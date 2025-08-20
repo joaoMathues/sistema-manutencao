@@ -1,0 +1,43 @@
+{
+  "machines": [
+    {
+      "id": "M001",
+      "name": "Torno CNC 1",
+      "ip_address": "192.168.1.100",
+      "opc_server": "opc.tcp://192.168.1.100:4840",
+      "variables": [
+        {
+          "name": "nivel_oleo",
+          "node_id": "ns=2;i=1",
+          "description": "Nível do óleo",
+          "unit": "%",
+          "alert_threshold": 80,
+          "critical_threshold": 70
+        },
+        {
+          "name": "temperatura_motor",
+          "node_id": "ns=2;i=2",
+          "description": "Temperatura do motor",
+          "unit": "°C",
+          "alert_threshold": 85,
+          "critical_threshold": 95
+        }
+      ]
+    }
+  ],
+  "technicians": [
+    {
+      "id": "T001",
+      "name": "João Silva",
+      "whatsapp": "+5554999123456",
+      "specialty": "Mecânica Geral",
+      "responsible_machines": [
+        "M001"
+      ]
+    }
+  ],
+  "alert_templates": {
+    "warning": "⚠️ ALERTA: {machine_name}\\n📊 Variável: {variable_name}\\n📈 Valor atual: {current_value} {unit}\\n🔔 Limite: {threshold} {unit}\\n⏰ Horário: {timestamp}",
+    "critical": "🚨 CRÍTICO: {machine_name}\\n📊 Variável: {variable_name}\\n📈 Valor atual: {current_value} {unit}\\n🔴 Limite crítico: {threshold} {unit}\\n⏰ Horário: {timestamp}\\n🔧 Ação necessária imediatamente!"
+  }
+}

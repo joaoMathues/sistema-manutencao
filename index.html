@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Manutenção Preventiva</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <h2>SMP</h2>
+                <span>Sistema de Manutenção</span>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-link active" data-section="dashboard">
+                <span class="nav-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-link" data-section="machines">
+                <span class="nav-icon">🏭</span>
+                <span>Máquinas</span>
+            </a>
+            <a href="#" class="nav-link" data-section="variables">
+                <span class="nav-icon">📈</span>
+                <span>Variáveis</span>
+            </a>
+            <a href="#" class="nav-link" data-section="technicians">
+                <span class="nav-icon">👥</span>
+                <span>Técnicos</span>
+            </a>
+            <a href="#" class="nav-link" data-section="alerts">
+                <span class="nav-icon">🚨</span>
+                <span>Alertas</span>
+            </a>
+            <a href="#" class="nav-link" data-section="settings">
+                <span class="nav-icon">⚙️</span>
+                <span>Configurações</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <header class="section-header">
+                <h1>Dashboard - Sistema de Manutenção Preventiva</h1>
+                <div class="header-actions">
+                    <span class="current-time" id="currentTime"></span>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- Status Cards -->
+                <div class="stats-row">
+                    <div class="stat-card stat-online">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-content">
+                            <h3 id="onlineMachines">1</h3>
+                            <p>Máquinas Online</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-warning">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-content">
+                            <h3 id="warningMachines">1</h3>
+                            <p>Com Alertas</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-offline">
+                        <div class="stat-icon">❌</div>
+                        <div class="stat-content">
+                            <h3 id="offlineMachines">1</h3>
+                            <p>Offline</p>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-uptime">
+                        <div class="stat-icon">⏱️</div>
+                        <div class="stat-content">
+                            <h3 id="avgUptime">93.3%</h3>
+                            <p>Uptime Médio</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts Panel -->
+                <div class="alerts-panel">
+                    <h3>Alertas em Tempo Real</h3>
+                    <div id="realtimeAlerts" class="alerts-list">
+                        <!-- Alerts will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="chart-container" style="position: relative; height: 300px;">
+                    <h3>Tendências das Variáveis</h3>
+                    <canvas id="trendsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Machines Section -->
+        <section id="machines" class="section">
+            <header class="section-header">
+                <h1>Gerenciamento de Máquinas</h1>
+                <button class="btn btn--primary" id="addMachineBtn">+ Adicionar Máquina</button>
+            </header>
+
+            <div class="machines-grid">
+                <div id="machinesList" class="machines-list">
+                    <!-- Machines will be populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Variables Section -->
+        <section id="variables" class="section">
+            <header class="section-header">
+                <h1>Variáveis de Monitoramento</h1>
+                <select id="machineSelect" class="form-control machine-select">
+                    <option value="">Selecione uma máquina</option>
+                </select>
+            </header>
+
+            <div class="variables-content">
+                <div id="variablesList" class="variables-list">
+                    <p class="no-selection">Selecione uma máquina para ver suas variáveis</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technicians Section -->
+        <section id="technicians" class="section">
+            <header class="section-header">
+                <h1>Técnicos Cadastrados</h1>
+                <button class="btn btn--primary" id="addTechnicianBtn">+ Adicionar Técnico</button>
+            </header>
+
+            <div id="techniciansList" class="technicians-list">
+                <!-- Technicians will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Alerts Section -->
+        <section id="alerts" class="section">
+            <header class="section-header">
+                <h1>Histórico de Alertas</h1>
+                <div class="alert-filters">
+                    <select id="statusFilter" class="form-control">
+                        <option value="">Todos os Status</option>
+                        <option value="pending">Pendente</option>
+                        <option value="in_progress">Em Atendimento</option>
+                        <option value="resolved">Resolvido</option>
+                    </select>
+                    <select id="levelFilter" class="form-control">
+                        <option value="">Todos os Níveis</option>
+                        <option value="warning">Alerta</option>
+                        <option value="critical">Crítico</option>
+                    </select>
+                </div>
+            </header>
+
+            <div id="alertsTable" class="alerts-table">
+                <!-- Alerts table will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings" class="section">
+            <header class="section-header">
+                <h1>Configurações do Sistema</h1>
+            </header>
+
+            <div class="settings-grid">
+                <div class="card">
+                    <div class="card__body">
+                        <h3>Intervalos de Monitoramento</h3>
+                        <div class="form-group">
+                            <label class="form-label">Intervalo de Coleta (segundos)</label>
+                            <input type="number" class="form-control" id="collectionInterval" value="5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Timeout de Conexão (segundos)</label>
+                            <input type="number" class="form-control" id="connectionTimeout" value="10">
+                        </div>
+                        <button class="btn btn--primary">Salvar Configurações</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card__body">
+                        <h3>Templates WhatsApp</h3>
+                        <div class="form-group">
+                            <label class="form-label">Template Alerta</label>
+                            <textarea class="form-control" id="warningTemplate" rows="4">⚠️ ALERTA: {machineName}
+📊 Variável: {variableName}
+📈 Valor atual: {currentValue} {unit}
+🔔 Limite: {threshold} {unit}
+⏰ Horário: {timestamp}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Template Crítico</label>
+                            <textarea class="form-control" id="criticalTemplate" rows="5">🚨 CRÍTICO: {machineName}
+📊 Variável: {variableName}
+📈 Valor atual: {currentValue} {unit}
+🔴 Limite crítico: {threshold} {unit}
+⏰ Horário: {timestamp}
+🔧 Ação necessária imediatamente!</textarea>
+                        </div>
+                        <button class="btn btn--primary">Salvar Templates</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Add Machine Modal -->
+    <div class="modal hidden" id="addMachineModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Nova Máquina</h3>
+                <button class="modal-close" data-modal="addMachineModal">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="addMachineForm">
+                    <div class="form-group">
+                        <label class="form-label">Nome da Máquina</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Endereço IP</label>
+                        <input type="text" class="form-control" name="ip" placeholder="192.168.1.100" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Servidor OPC UA</label>
+                        <input type="text" class="form-control" name="opcServer" placeholder="opc.tcp://192.168.1.100:4840" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Descrição</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn--outline" data-modal="addMachineModal">Cancelar</button>
+                <button class="btn btn--primary" id="saveMachineBtn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Technician Modal -->
+    <div class="modal hidden" id="addTechnicianModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Novo Técnico</h3>
+                <button class="modal-close" data-modal="addTechnicianModal">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="addTechnicianForm">
+                    <div class="form-group">
+                        <label class="form-label">Nome</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">WhatsApp</label>
+                        <input type="tel" class="form-control" name="whatsapp" placeholder="+5554999123456" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Especialidade</label>
+                        <input type="text" class="form-control" name="specialty" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn--outline" data-modal="addTechnicianModal">Cancelar</button>
+                <button class="btn btn--primary" id="saveTechnicianBtn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Variable Modal -->
+    <div class="modal hidden" id="addVariableModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Nova Variável</h3>
+                <button class="modal-close" data-modal="addVariableModal">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="addVariableForm">
+                    <div class="form-group">
+                        <label class="form-label">Nome da Variável</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Descrição</label>
+                        <input type="text" class="form-control" name="description" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Node ID OPC UA</label>
+                        <input type="text" class="form-control" name="nodeId" placeholder="ns=2;i=1" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Unidade</label>
+                        <input type="text" class="form-control" name="unit" placeholder="%" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Limite de Alerta</label>
+                        <input type="number" class="form-control" name="alertThreshold" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Limite Crítico</label>
+                        <input type="number" class="form-control" name="criticalThreshold" step="0.1" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn--outline" data-modal="addVariableModal">Cancelar</button>
+                <button class="btn btn--primary" id="saveVariableBtn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

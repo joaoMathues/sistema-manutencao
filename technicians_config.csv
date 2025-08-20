@@ -1,0 +1,3 @@
+id,name,whatsapp,specialty,responsible_machines
+T001,João Silva,+5554999123456,Mecânica Geral,"['M001', 'M002']"
+T002,Maria Santos,+5554999234567,Sistemas Hidráulicos,['M002']
