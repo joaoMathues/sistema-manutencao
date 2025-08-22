@@ -327,6 +327,49 @@
         </div>
     </div>
 
+    <!-- Edit Technician Modal -->
+    <div class="modal hidden" id="editTechnicianModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Editar Técnico</h3>
+          <button class="modal-close" data-modal="editTechnicianModal" title="Fechar">×</button>
+        </div>
+        <div class="modal-body">
+          <form id="editTechnicianForm">
+            <input type="hidden" name="technicianId" value="">
+            <div class="form-group">
+              <label class="form-label">Nome</label>
+              <input name="name" type="text" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">WhatsApp</label>
+              <input name="whatsapp" type="tel" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Especialidade</label>
+              <input name="specialty" type="text" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select name="status" class="form-control">
+                <option value="available">Disponível</option>
+                <option value="busy">Ocupado</option>
+                <option value="away">Ausente</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Máquinas Responsáveis</label>
+              <select id="responsibleMachinesSelect" multiple size="6" class="form-control"></select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn--outline" data-modal="editTechnicianModal">Cancelar</button>
+          <button id="saveEditTechnicianBtn" class="btn btn--primary">Salvar</button>
+        </div>
+      </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

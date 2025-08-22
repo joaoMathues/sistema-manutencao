@@ -1,4 +1,6 @@
 // Sistema de Manutenção Preventiva - JavaScript
+const API_BASE = 'http://localhost:5000'; // use o host/porta do backend Flask
+
 class MaintenanceSystem {
     constructor() {
         this.data = {
@@ -319,6 +321,15 @@ class MaintenanceSystem {
             });
         }
 
+        // Save edited technician (novo)
+        const saveEditTechnicianBtn = document.getElementById('saveEditTechnicianBtn');
+        if (saveEditTechnicianBtn) {
+            saveEditTechnicianBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.saveTechnicianEdit();
+            });
+        }
+
         const saveVariableBtn = document.getElementById('saveVariableBtn');
         if (saveVariableBtn) {
             saveVariableBtn.addEventListener('click', (e) => {
@@ -482,6 +493,13 @@ class MaintenanceSystem {
         } else if (level === 'warning' && machine.status === 'online') {
             machine.status = 'warning';
         }
+
+        // Atualiza UI imediatamente
+        this.renderAlertsTable();
+        this.renderDashboard();
+
+        // Envia WhatsApp automaticamente (chama backend)
+        this.autoSendWhatsApp(newAlert);
     }
 
     getResponsibleTechnician(machineId) {
@@ -653,6 +671,11 @@ class MaintenanceSystem {
                                 <span class="machine-tag">${name}</span>
                             `).join('')}
                         </div>
+                    </div>
+                    <div class="technician-actions">
+                        <button class="btn btn--sm btn--outline" onclick="window.system.openEditTechnicianModal('${technician.id}')">
+                            Editar
+                        </button>
                     </div>
                 </div>
             `;
@@ -888,26 +911,72 @@ class MaintenanceSystem {
     saveMachine() {
         const form = document.getElementById('addMachineForm');
         if (!form) return;
+        const name = form.elements['name'].value.trim();
+        const ip = form.elements['ip'].value.trim();
+        const opcServer = form.elements['opcServer'].value.trim();
+        const description = form.elements['description'].value.trim();
 
-        const formData = new FormData(form);
-        
-        const newMachine = {
+        if (!name || !opcServer) {
+            alert('Nome e Servidor OPC UA são obrigatórios.');
+            return;
+        }
+
+        // Criar objeto de máquina local
+        const machine = {
             id: 'M' + String(this.data.machines.length + 1).padStart(3, '0'),
-            name: formData.get('name'),
-            ip: formData.get('ip'),
-            opcServer: formData.get('opcServer'),
-            description: formData.get('description'),
-            status: 'offline',
-            uptime: 0,
+            name,
+            ip,
+            opcServer,
+            description,
+            status: 'checking', // enquanto testa
+            uptime: 100,
             variables: []
         };
 
-        this.data.machines.push(newMachine);
+        // Atualiza UI localmente
+        this.data.machines.push(machine);
         this.renderMachines();
         this.populateMachineSelect();
         this.closeModal('addMachineModal');
-        
-        alert('Máquina adicionada com sucesso!');
+
+        // Notifica backend (memória) para que opcua backend detecte
+        fetch(`${API_BASE}/api/active_machines`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(machine)
+        })
+        .then(res => res.json())
+        .then(json => {
+            if (json.status === 'ok') {
+                console.info('Máquina enviada ao backend (transiente):', json.machine);
+            } else {
+                console.warn('Resposta inesperada do backend:', json);
+            }
+        })
+        .catch(err => console.warn('Falha ao notificar backend sobre máquina:', err));
+
+        // Teste imediato de conectividade TCP ao OPC UA (rápido)
+        fetch(`${API_BASE}/api/test_connection`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ opcServer })
+        })
+        .then(r => r.json())
+        .then(result => {
+            const m = this.data.machines.find(x => x.id === machine.id);
+            if (m) {
+                m.status = result.reachable ? 'online' : 'offline';
+                // opcional: adicionar detalhe de erro
+                if (!result.reachable && result.error) m.lastError = result.error;
+                this.renderMachines();
+                this.renderDashboard();
+            }
+        })
+        .catch(err => {
+            const m = this.data.machines.find(x => x.id === machine.id);
+            if (m) { m.status = 'offline'; this.renderMachines(); this.renderDashboard(); }
+            console.warn('Erro no teste de conexão:', err);
+        });
     }
 
     saveTechnician() {
@@ -930,6 +999,67 @@ class MaintenanceSystem {
         this.closeModal('addTechnicianModal');
         
         alert('Técnico adicionado com sucesso!');
+    }
+
+    // Abre modal de edição e popula campos
+    openEditTechnicianModal(technicianId) {
+        const tech = this.data.technicians.find(t => t.id === technicianId);
+        if (!tech) return;
+
+        const modal = document.getElementById('editTechnicianModal');
+        if (!modal) return;
+
+        const form = document.getElementById('editTechnicianForm');
+        if (!form) return;
+
+        form.elements['technicianId'].value = tech.id;
+        form.elements['name'].value = tech.name;
+        form.elements['whatsapp'].value = tech.whatsapp;
+        form.elements['specialty'].value = tech.specialty;
+        form.elements['status'].value = tech.status || 'available';
+
+        // Popular select de máquinas e marcar as selecionadas
+        this.populateResponsibleMachinesMultiSelect(tech.responsibleMachines);
+
+        modal.classList.remove('hidden');
+    }
+
+    // Preenche o multi-select com todas as máquinas e marca as selecionadas
+    populateResponsibleMachinesMultiSelect(selected = []) {
+        const select = document.getElementById('responsibleMachinesSelect');
+        if (!select) return;
+        select.innerHTML = '';
+        this.data.machines.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.name;
+            if (selected.includes(m.id)) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
+    // Salva alterações do técnico editado
+    saveTechnicianEdit() {
+        const form = document.getElementById('editTechnicianForm');
+        if (!form) return;
+
+        const techId = form.elements['technicianId'].value;
+        const tech = this.data.technicians.find(t => t.id === techId);
+        if (!tech) return;
+
+        tech.name = form.elements['name'].value;
+        tech.whatsapp = form.elements['whatsapp'].value;
+        tech.specialty = form.elements['specialty'].value;
+        tech.status = form.elements['status'].value;
+
+        // Ler multi-select de máquinas
+        const select = document.getElementById('responsibleMachinesSelect');
+        tech.responsibleMachines = select ? Array.from(select.selectedOptions).map(o => o.value) : [];
+
+        this.renderTechnicians();
+        this.populateMachineSelect(); // manter selects atualizados
+        this.closeModal('editTechnicianModal');
+        alert('Técnico atualizado com sucesso!');
     }
 
     saveVariable() {
@@ -963,6 +1093,37 @@ class MaintenanceSystem {
             
             alert('Variável adicionada com sucesso!');
         }
+    }
+
+    // Envia mensagem via backend (Twilio / WhatsApp Cloud) automaticamente
+    autoSendWhatsApp(alert) {
+        const tech = this.data.technicians.find(t => t.id === alert.technicianId);
+        if (!tech || !tech.whatsapp) {
+            console.warn('Técnico sem telefone para alertId', alert.id);
+            return;
+        }
+
+        const message = this.formatWhatsAppMessage(alert, alert.level === 'critical' ? 'critical' : 'warning');
+
+        fetch(`${API_BASE}/api/send_whatsapp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to: tech.whatsapp, message, alertId: alert.id })
+        })
+        .then(res => res.json())
+        .then(json => {
+            if (json.status === 'sent' || json.sid) {
+                // marcar como em atendimento (opcional)
+                const a = this.data.alerts.find(x => x.id === alert.id);
+                if (a) a.status = 'in_progress';
+                this.renderAlertsTable();
+                this.renderDashboard();
+                console.info('WhatsApp enviado para', tech.name);
+            } else {
+                console.warn('Erro envio WhatsApp', json);
+            }
+        })
+        .catch(err => console.error('Falha ao enviar WhatsApp', err));
     }
 }
 

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: sistema-manutencao
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn backend_server:app
+    repo: https://github.com/joaoMathues/sistema-manutencao
+    branch: main
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
