@@ -106,5 +106,6 @@ Visualize estatísticas em tempo real:
 Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
 
 ## 👥 Autor
+João Matheus Borba
 
 Desenvolvido para sistemas industriais de manutenção preventiva.
